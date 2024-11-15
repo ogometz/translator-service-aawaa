@@ -1,47 +1,112 @@
-def translate_content(content: str) -> tuple[bool, str]:
-    translations = {
-        "这是一条中文消息": "This is a Chinese message",
-        "Ceci est un message en français": "This is a French message",
-        "Esta es un mensaje en español": "This is a Spanish message",
-        "Esta é uma mensagem em português": "This is a Portuguese message",
-        "これは日本語のメッセージです": "This is a Japanese message",
-        "이것은 한국어 메시지입니다": "This is a Korean message",
-        "Dies ist eine Nachricht auf Deutsch": "This is a German message",
-        "Questo è un messaggio in italiano": "This is an Italian message",
-        "Это сообщение на русском": "This is a Russian message",
-        "هذه رسالة باللغة العربية": "This is an Arabic message",
-        "यह हिंदी में संदेश है": "This is a Hindi message",
-        "นี่คือข้อความภาษาไทย": "This is a Thai message",
-        "Bu bir Türkçe mesajdır": "This is a Turkish message",
-        "Đây là một tin nhắn bằng tiếng Việt": "This is a Vietnamese message",
-        "Esto es un mensaje en catalán": "This is a Catalan message",
-        "This is an English message": "This is an English message",
-        "Hier ist dein erstes Beispiel.": "This is your first example.",
-        "Hola.": "Hello.",
-        "Привет.": "Hello.",
-        "こんにちは.": "Hello.",
-        "你好": "Hello",
-        "안녕하세요": "Hello",
-        "مرحبا": "Hello",
-        "नमस्ते": "Hello",
-        "สวัสดี": "Hello",
-        "Por favor": "Please",
-        "γειά": "Hello",
-        "Makemake au e ai": "I want to eat",
-        "Hallo": "Hello",
-        "Danke.": "Thank you.",
-        "ฉันอยากจะนั่งลง": "I want to sit down",
-        "To jest zdanie": "This is a sentence"
-    }
+from openai import AzureOpenAI
+import os
 
-    # Check if the content has a predefined translation
-    if content in translations:
-        is_english = (content == "This is an English message")
-        return is_english, translations[content]
+# Initialize the Azure OpenAI client
+client = AzureOpenAI(
+    API_KEY = os.getenv("AZURE_OPENAI_API_KEY"),
+    api_version="2024-02-15-preview",
+    azure_endpoint="https://translator-service-aawaa.azurewebsites.net/"  # Replace with your Azure endpoint
+    )
+
+# Make a request to your Azure OpenAI model
+response = client.chat.completions.create(
+    model="gpt-4o-mini",  # This should match your deployment name in Azure
+    messages=[
+        {
+            "role": "user",
+            "content": "What is the future of artificial intelligence?"
+        }
+    ]
+)
+
+
+def get_language(post: str) -> str:
+    context = f"I'm trying to translate some text, only return the language it is written in and nothing else. What is the language this text: {post} is written in."
+
+    try:
+        # Make request for language detection
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {
+                    "role": "user",
+                    "content": context
+                }
+            ]
+        )
+
+        # Extract and return detected language
+        detected_lang = response.choices[0].message.content.strip()
+        # print("this is detected lang:", detected_lang)
+        return detected_lang
+
+    except Exception as e:
+        print(f"Error: {e}")
+        return ""
     
-    # Handle unintelligible/malformed input
-    if not content.isascii() or any(char.isdigit() for char in content) or len(content.split()) == 1 and len(content) > 10:
+
+def get_translation(post: str) -> str:
+    context = (
+        f"I want to translate an input text to English."
+        f"First, check the language of the text. If the language is English, return the original input exactly as it is, with no changes at all."
+        f"If the text does not belong to any language, even after uncapitalizing the input text, return the statement 'There was an error translating the text'."
+        f"If the text can be translated to English, return only the translated text to English with no additional text. Do not add, remove, or alter any punctuation marks; match the punctuation pattern of the original text exactly."
+        f"For example, if the input is 'Hola' translate it to 'Hello' without any punctuation. If the input has punctuation, like '¡Hola!', translate it as 'Hello!' preserving the punctuation style."
+        f"This is the input text: '{post}'."
+    )
+
+    try:
+        # Make request for translation
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {
+                    "role": "user",
+                    "content": context
+                }
+            ]
+        )
+
+        # Extract and return translated text
+        translation = response.choices[0].message.content.strip()
+        return translation
+
+    except Exception as e:
+        print(f"Error translating: {e}")
+        return ""
+
+
+def translate_content(content: str) -> tuple[bool, str]:
+    try:
+        is_eng = get_language(content)
+        if (is_eng is None or
+        not isinstance(is_eng, str) or
+        is_eng == "N/A" or
+        len(is_eng) <= 0 or
+        is_eng == "I don't understand your request"):
+            return False, "There was an error translating the text"
+
+        if is_eng == "English":
+            return True, content
+        else:
+            translated = get_translation(content)
+            if (translated is None or
+            not isinstance(translated, str) or
+            translated == "N/A" or
+            len(translated) <= 0 or
+            translated == "I don't understand your request"):
+                return False, "There was an error translating the text"
+
+            original_full_stop_exist = content.endswith(".")
+            translated_post_full_stop_exist = translated.endswith(".")
+
+            if original_full_stop_exist and not translated_post_full_stop_exist:
+                return False, translated + "."
+
+            if not original_full_stop_exist and translated_post_full_stop_exist:
+                return False, translated[:-1]
+
+            return False, translated
+
+    except Exception as e:
         return False, "There was an error translating the text"
-    
-    # Default to returning the English text as-is for intelligible inputs
-    return True, content
