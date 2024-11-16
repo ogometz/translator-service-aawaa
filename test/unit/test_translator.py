@@ -55,4 +55,4 @@ def test_llm_gibberish_response():
     is_english, translated_content = translate_content("asdfghjkl12345")
     print(f"Post: 'asdfghjkl12345', Is English: {is_english}, Translation: {translated_content}")
     assert is_english == False
-    assert translated_content == "There was an error translating the text"
+    assert translated_content == "Unknown language"
