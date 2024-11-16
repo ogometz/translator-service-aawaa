@@ -8,9 +8,20 @@ client = AzureOpenAI(
     azure_endpoint="https://apirecitation.openai.azure.com"  # Replace with your Azure endpoint
     )
 
+# Make a request to your Azure OpenAI model
+response = client.chat.completions.create(
+    model="gpt-4o-mini",  # This should match your deployment name in Azure
+    messages=[
+        {
+            "role": "user",
+            "content": "What is the future of artificial intelligence?"
+        }
+    ]
+)
+
 
 def get_language(post: str) -> str:
-    context = f"I'm trying to translate some text, only return the language it is written in and nothing else. If you can't determine it, then only return the word 'unknown' What is the language of this text: {post}"
+    context = f"I'm trying to translate some text, only return the language it is written in and nothing else. What is the language this text: {post} is written in."
 
     try:
         # Make request for language detection
@@ -68,19 +79,24 @@ def get_translation(post: str) -> str:
 def translate_content(content: str) -> tuple[bool, str]:
     try:
         is_eng = get_language(content)
-        if is_eng.lower() == "unknown":
-            return False, "Unknown language"
+        is_translated = get_translation(content)
+        if (is_translated is None or
+        not isinstance(is_translated, str) or
+        is_translated == "N/A" or
+        len(is_translated) <= 0 or
+        is_translated == "I don't understand your request"):
+            return False, "There was an error translating the text"
 
         if is_eng == "English":
             return True, content
         else:
             translated = get_translation(content)
-            # if (translated is None or
-            # not isinstance(translated, str) or
-            # translated == "N/A" or
-            # len(translated) <= 0 or
-            # translated == "I don't understand your request"):
-            #     return False, "There was an error translating the text"
+            if (translated is None or
+            not isinstance(translated, str) or
+            translated == "N/A" or
+            len(translated) <= 0 or
+            translated == "I don't understand your request"):
+                return False, "There was an error translating the text"
 
             original_full_stop_exist = content.endswith(".")
             translated_post_full_stop_exist = translated.endswith(".")
