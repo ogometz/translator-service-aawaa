@@ -79,11 +79,12 @@ def get_translation(post: str) -> str:
 def translate_content(content: str) -> tuple[bool, str]:
     try:
         is_eng = get_language(content)
-        if (is_eng is None or
-        not isinstance(is_eng, str) or
-        is_eng == "N/A" or
-        len(is_eng) <= 0 or
-        is_eng == "I don't understand your request"):
+        is_translated = get_translation(content)
+        if (is_translated is None or
+        not isinstance(is_translated, str) or
+        is_translated == "N/A" or
+        len(is_translated) <= 0 or
+        is_translated == "I don't understand your request"):
             return False, "There was an error translating the text"
 
         if is_eng == "English":
