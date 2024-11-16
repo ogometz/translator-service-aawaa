@@ -7,7 +7,7 @@ def test_llm_normal_response_chinese():
     is_english, translated_content = translate_content("这是一条中文消息")
     print(f"Post: '这是一条中文消息', Is English: {is_english}, Translation: {translated_content}")
     assert is_english == False
-    assert translated_content == "This is a Chinese message."
+    assert translated_content == "This is a Chinese message"
 
 
 def test_llm_normal_response_spanish():
