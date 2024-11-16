@@ -42,7 +42,7 @@ def get_translation(post: str) -> str:
         # f"If the text can be translated to English, return only the translated text to English with no additional text. Do not add, remove, or alter any punctuation marks; match the punctuation pattern of the original text exactly."
         # f"For example, if the input is 'Hola' translate it to 'Hello' without any punctuation. If the input has punctuation, like '¡Hola!', translate it as 'Hello!' preserving the punctuation style."
         # f"This is the input text: '{post}'."
-        f"Please translate the following text to english: '{post}'. Return only the translated text to English with no additional text. Do not add, remove, or alter any punctuation marks; match the punctuation pattern  of the original text exactly. For example, if the input is 'Hola'  translate it to 'Hello' without any punctuation. If the input has  punctuation, like '¡Hola!', translate it as 'Hello!' preserving the  punctuation style."
+        f"Please translate the following text to english: '{post}'. Return only the translated text to English with no additional text. Do not add, remove, or alter any punctuation marks; match the punctuation pattern of the original text exactly. For example, if the input is 'Hola'  translate it to 'Hello' without any punctuation. If the input has  punctuation, like '¡Hola!', translate it as 'Hello!' preserving the punctuation style."
     )
 
     try:
@@ -68,11 +68,11 @@ def get_translation(post: str) -> str:
 
 def translate_content(content: str) -> tuple[bool, str]:
     try:
-        is_eng = get_language(content)
-        if is_eng.lower() == "neither":
+        language = get_language(content)
+        if language.lower() == "neither":
             return False, "Unknown language"
 
-        if is_eng.lower() == "english":
+        if language.lower() == "english":
             return True, content
         else:
             translated = get_translation(content)
@@ -95,4 +95,4 @@ def translate_content(content: str) -> tuple[bool, str]:
             return False, translated
 
     except Exception as e:
-        return False, "There was an error translating the text"
+        return False, "There was an issue translating the text"
