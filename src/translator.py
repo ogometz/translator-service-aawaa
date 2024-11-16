@@ -8,17 +8,6 @@ client = AzureOpenAI(
     azure_endpoint="https://apirecitation.openai.azure.com"  # Replace with your Azure endpoint
     )
 
-# Make a request to your Azure OpenAI model
-response = client.chat.completions.create(
-    model="gpt-4o-mini",  # This should match your deployment name in Azure
-    messages=[
-        {
-            "role": "user",
-            "content": "What is the future of artificial intelligence?"
-        }
-    ]
-)
-
 
 def get_language(post: str) -> str:
     context = f"I'm trying to translate some text, only return the language it is written in and nothing else. What is the language this text: {post} is written in."
@@ -79,12 +68,11 @@ def get_translation(post: str) -> str:
 def translate_content(content: str) -> tuple[bool, str]:
     try:
         is_eng = get_language(content)
-        is_translated = get_translation(content)
-        if (is_translated is None or
-        not isinstance(is_translated, str) or
-        is_translated == "N/A" or
-        len(is_translated) <= 0 or
-        is_translated == "I don't understand your request"):
+        if (is_eng is None or
+        not isinstance(is_eng, str) or
+        is_eng == "N/A" or
+        len(is_eng) <= 0 or
+        is_eng == "I don't understand your request"):
             return False, "There was an error translating the text"
 
         if is_eng == "English":
